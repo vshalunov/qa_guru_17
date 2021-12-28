@@ -61,7 +61,7 @@ public class ReqresTests {
                 .contentType(JSON)
                 .body(data)
                 .when()
-                .patch("/api/users/2")
+                .put("/api/users/2")
                 .then().log().all()
                 .statusCode(200)
                 .body("name", is("Vasilii"),
