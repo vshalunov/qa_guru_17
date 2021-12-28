@@ -27,7 +27,9 @@ public class ReqresTests {
                 .body("data.id", is(2),
                         "data.email", is("janet.weaver@reqres.in"),
                         "data.first_name", notNullValue(),
-                        "support.url", is("https://reqres.in/#support-heading"));
+                        "support.url", is("https://reqres.in/#support-heading"))
+                .headers("Content-Type", is("application/json; charset=utf-8"),
+                        "access-control-allow-origin", is("*"));
     }
 
     @Test
