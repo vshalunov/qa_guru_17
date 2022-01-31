@@ -1,48 +1,50 @@
 package com.github.zlwqa;
 
-import io.restassured.RestAssured;
-import org.junit.jupiter.api.BeforeAll;
+import com.github.zlwqa.lombok.LombokUserData;
+import com.github.zlwqa.models.ModelsUserData;
 import org.junit.jupiter.api.Test;
 
+import static com.github.zlwqa.specs.Specs.requestSpec;
+import static com.github.zlwqa.specs.Specs.responseSpec;
 import static io.restassured.RestAssured.given;
-import static io.restassured.http.ContentType.JSON;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ReqresTests {
-
-    @BeforeAll
-    static void setUp() {
-        RestAssured.baseURI = "https://reqres.in/";
-    }
+public class ReqresTests extends TestBase {
 
     @Test
-    void getSingleUser() {
+    void getSingleUserWithModels() {
 
-        given()
+        ModelsUserData userData = given()
+                .spec(requestSpec)
                 .when()
-                .get("/api/users/2")
-                .then().log().all()
-                .statusCode(200)
-                .body("data.id", is(2),
+                .get("/users/2")
+                .then()
+                .spec(responseSpec)
+                .extract().as(ModelsUserData.class);
+/*                .body("data.id", is(2),
                         "data.email", is("janet.weaver@reqres.in"),
                         "data.first_name", notNullValue(),
                         "support.url", is("https://reqres.in/#support-heading"))
                 .headers("Content-Type", is("application/json; charset=utf-8"),
-                        "access-control-allow-origin", is("*"));
+                        "access-control-allow-origin", is("*"));*/
+        assertEquals(2, userData.getData().getId());
+        assertEquals("Janet", userData.getData().getFirstName());
+        assertEquals("Weaver", userData.getData().getLastName());
     }
 
     @Test
-    void createUser() {
+    void createUserWithGroovy() {
 
         String data = "{\"name\": \"Vasilii\"," +
                 "\"job\": \"QA\"}";
 
         given()
-                .contentType(JSON)
+                .spec(requestSpec)
                 .body(data)
                 .when()
-                .post("/api/users")
+                .post("/users")
                 .then().log().status().and().log().body()
                 .statusCode(201)
                 .body("name", is("Vasilii"),
@@ -52,18 +54,48 @@ public class ReqresTests {
     }
 
     @Test
+    public void checkEmailWithGroovy() {
+        // @formatter:off
+        given()
+                .spec(requestSpec)
+                .when()
+                .get("/users")
+                .then()
+                .log().body()
+                .body("data.findAll{it.email =~/.*?@reqres.in/}.email.flatten()",
+                        hasItem("eve.holt@reqres.in"));
+        // @formatter:on
+    }
+
+    @Test
+    void getListUsersWithLombokModel() {
+        LombokUserData data = given()
+                .spec(requestSpec)
+                .when()
+                .get("/users?page=1")
+                .then()
+                .spec(responseSpec)
+                .extract().as(LombokUserData.class);
+
+        assertThat(data.getUser()[5].getId()).isEqualTo(6);
+        assertThat(data.getUser()[2].getEmail()).isEqualTo("emma.wong@reqres.in");
+        assertThat(data.getUser()[3].getLastName()).isEqualTo("Holt");
+        assertThat(data.getUser()[4].getFirstName()).isEqualTo("Charles");
+    }
+
+    @Test
     void updateUserWithPut() {
 
         String data = "{\"name\": \"Vasilii\"," +
                 "\"job\": \"AQA\"}";
 
         given()
-                .contentType(JSON)
+                .spec(requestSpec)
                 .body(data)
                 .when()
-                .put("/api/users/2")
-                .then().log().all()
-                .statusCode(200)
+                .put("/users/2")
+                .then()
+                .spec(responseSpec)
                 .body("name", is("Vasilii"),
                         "job", is("AQA"),
                         "updatedAt", notNullValue());
@@ -76,12 +108,12 @@ public class ReqresTests {
                 "\"job\": \"AQA\"}";
 
         given()
-                .contentType(JSON)
+                .spec(requestSpec)
                 .body(data)
                 .when()
-                .patch("/api/users/2")
-                .then().log().all()
-                .statusCode(200)
+                .patch("/users/2")
+                .then()
+                .spec(responseSpec)
                 .body("name", is("Vasilii"),
                         "job", is("AQA"),
                         "updatedAt", notNullValue());
@@ -91,8 +123,9 @@ public class ReqresTests {
     void deleteUser() {
 
         given()
+                .spec(requestSpec)
                 .when()
-                .delete("/api/users/2")
+                .delete("/users/2")
                 .then().log().status()
                 .statusCode(204);
     }
