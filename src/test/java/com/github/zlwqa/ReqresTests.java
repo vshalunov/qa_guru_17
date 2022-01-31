@@ -35,7 +35,7 @@ public class ReqresTests extends TestBase {
     }
 
     @Test
-    void createUserWithGroovy() {
+    void createUser() {
 
         String data = "{\"name\": \"Vasilii\"," +
                 "\"job\": \"QA\"}";
